@@ -20,6 +20,12 @@ function normalizeRating(rawRating: number) {
 interface TrainingOptions {
   epochs?: number;
   batchSize?: number;
+  onEpochEnd?: (progress: {
+    epoch: number;
+    totalEpochs: number;
+    loss: number | null;
+    validationLoss: number | null;
+  }) => void;
 }
 
 export class NeuralRecommender {
@@ -68,6 +74,16 @@ export class NeuralRecommender {
         shuffle: true,
         validationSplit: Math.min(0.2, ratings.length > 100 ? 0.2 : 0),
         verbose: 0,
+        callbacks: {
+          onEpochEnd: async (epoch, logs) => {
+            options.onEpochEnd?.({
+              epoch: epoch + 1,
+              totalEpochs: options.epochs ?? 14,
+              loss: typeof logs?.loss === 'number' ? logs.loss : null,
+              validationLoss: typeof logs?.val_loss === 'number' ? logs.val_loss : null,
+            });
+          },
+        },
       });
 
       this.model?.dispose();

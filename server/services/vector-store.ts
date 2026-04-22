@@ -1,4 +1,5 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
+import crypto from 'node:crypto';
 
 import type { SemanticCandidate, VectorRecord } from '../types';
 
@@ -21,6 +22,18 @@ function cosineSimilarity(left: number[], right: number[]) {
   }
 
   return dot / (Math.sqrt(leftNorm) * Math.sqrt(rightNorm));
+}
+
+function deterministicUuidFromText(value: string) {
+  const seed = crypto.createHash('sha1').update(`book-rec:${value}`).digest('hex').slice(0, 32).split('');
+
+  // RFC 4122 UUID v5 style bits: version nibble + variant nibble.
+  seed[12] = '5';
+  const variant = parseInt(seed[16], 16);
+  seed[16] = ((variant & 0x3) | 0x8).toString(16);
+
+  const hex = seed.join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 
 export interface VectorStore {
@@ -90,7 +103,7 @@ export class QdrantVectorStore implements VectorStore {
     await this.client.upsert(this.collectionName, {
       wait: true,
       points: records.map((record) => ({
-        id: record.id,
+        id: deterministicUuidFromText(record.id),
         vector: record.vector,
         payload: record.payload,
       })),
@@ -107,7 +120,8 @@ export class QdrantVectorStore implements VectorStore {
 
     return searchResult
       .map((entry) => {
-        const bookId = String(entry.id);
+        const payload = entry.payload as { book_id?: unknown } | undefined;
+        const bookId = typeof payload?.book_id === 'string' ? payload.book_id : String(entry.id);
         return {
           bookId,
           semanticScore: typeof entry.score === 'number' ? entry.score : 0,

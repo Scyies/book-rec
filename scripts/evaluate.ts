@@ -7,6 +7,20 @@ import { SemanticRetriever } from '../server/services/semantic-retriever';
 import { InMemoryVectorStore } from '../server/services/vector-store';
 import type { Rating } from '../server/types';
 
+function formatDuration(milliseconds: number) {
+  const totalSeconds = Math.max(0, Math.round(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':');
+}
+
+function logPhase(message: string) {
+  const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+  console.log(`[${now}] ${message}`);
+}
+
 function precisionAtK(recommendations: string[], relevant: Set<string>, k: number) {
   const top = recommendations.slice(0, k);
   const hits = top.filter((bookId) => relevant.has(bookId)).length;
@@ -84,19 +98,40 @@ function splitFavoritesAndRelevant(ratings: Rating[]) {
 }
 
 async function main() {
+  const runStartedAt = Date.now();
   const topK = 10;
+  logPhase('[1/4] Loading dataset...');
   const dataRepository = new DataRepository({
     primaryDirectory: appConfig.dataDir,
     fallbackDirectory: appConfig.fallbackDataDir,
   });
 
   await dataRepository.load();
+  logPhase(
+    `[1/4] Loaded ${dataRepository.getBooks().length} books, ${dataRepository.getUsers().length} users, ${dataRepository.getRatings().length} ratings.`,
+  );
 
+  logPhase('[2/4] Building semantic index...');
   const semanticRetriever = new SemanticRetriever(new InMemoryVectorStore(), appConfig.vectorDim);
   await semanticRetriever.indexBooks(dataRepository.getBooks());
+  logPhase('[2/4] Semantic index ready.');
 
+  logPhase('[3/4] Training neural recommender...');
+  const trainingStartedAt = Date.now();
   const neuralRecommender = new NeuralRecommender();
-  await neuralRecommender.train(dataRepository.getRatings());
+  const totalEpochs = 14;
+  await neuralRecommender.train(dataRepository.getRatings(), {
+    epochs: totalEpochs,
+    onEpochEnd: ({ epoch, totalEpochs: epochs, loss, validationLoss }) => {
+      const elapsed = Date.now() - trainingStartedAt;
+      const epochDuration = elapsed / epoch;
+      const eta = epochDuration * (epochs - epoch);
+      console.log(
+        `[train] epoch ${epoch}/${epochs} loss=${loss?.toFixed(5) ?? 'n/a'} val_loss=${validationLoss?.toFixed(5) ?? 'n/a'} elapsed=${formatDuration(elapsed)} eta=${formatDuration(eta)}`,
+      );
+    },
+  });
+  logPhase(`[3/4] Neural model ready in ${formatDuration(Date.now() - trainingStartedAt)}.`);
 
   const hybridRecommender = new HybridRecommender(dataRepository, semanticRetriever, neuralRecommender, {
     alpha: appConfig.hybridAlpha,
@@ -105,6 +140,8 @@ async function main() {
 
   const { favoritesByUser, relevantByUser } = splitFavoritesAndRelevant(dataRepository.getRatings());
   const userIds = [...favoritesByUser.keys()].filter((userId) => relevantByUser.has(userId));
+  logPhase(`[4/4] Evaluating baselines for ${userIds.length} users...`);
+  const evaluationStartedAt = Date.now();
 
   const popularitySortedBooks = dataRepository
     .getPopularBooks(dataRepository.getBooks().length)
@@ -117,7 +154,8 @@ async function main() {
     hybrid: { precision: [] as number[], recall: [] as number[], ndcg: [] as number[] },
   };
 
-  for (const userId of userIds) {
+  for (let userIndex = 0; userIndex < userIds.length; userIndex += 1) {
+    const userId = userIds[userIndex];
     const favorites = favoritesByUser.get(userId) ?? [];
     const relevant = relevantByUser.get(userId) ?? new Set<string>();
     const excluded = new Set(favorites);
@@ -164,8 +202,21 @@ async function main() {
       metrics[name].recall.push(recallAtK(recommendations, relevant, topK));
       metrics[name].ndcg.push(ndcgAtK(recommendations, relevant, topK));
     }
+
+    const processed = userIndex + 1;
+    if (processed === 1 || processed === userIds.length || processed % 50 === 0) {
+      const elapsed = Date.now() - evaluationStartedAt;
+      const perUser = elapsed / processed;
+      const eta = perUser * (userIds.length - processed);
+      const percent = ((processed / userIds.length) * 100).toFixed(1);
+
+      console.log(
+        `[eval] ${processed}/${userIds.length} users (${percent}%) elapsed=${formatDuration(elapsed)} eta=${formatDuration(eta)}`,
+      );
+    }
   }
 
+  logPhase(`Evaluation finished in ${formatDuration(Date.now() - runStartedAt)}.`);
   console.log('Evaluation dataset users:', userIds.length);
   console.log('');
   console.log('Model\t\tPrecision@10\tRecall@10\tNDCG@10');
