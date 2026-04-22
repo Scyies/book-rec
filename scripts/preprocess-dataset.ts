@@ -50,22 +50,31 @@ function pickValue(record: Record<string, string>, candidates: string[]) {
 async function readCsv(filePath: string) {
   const content = await fs.readFile(filePath, 'latin1');
 
-  const parseWithDelimiter = (delimiter: string) =>
-    parse(content, {
+  const firstLine = content.split(/\r?\n/, 1)[0] ?? '';
+  const commas = (firstLine.match(/,/g) ?? []).length;
+  const semicolons = (firstLine.match(/;/g) ?? []).length;
+  const preferredDelimiter = semicolons > commas ? ';' : ',';
+  const fallbackDelimiter = preferredDelimiter === ',' ? ';' : ',';
+
+  const parseWithDelimiter = (delimiter: string) => {
+    return parse(content, {
       columns: true,
       delimiter,
       skip_empty_lines: true,
       relax_quotes: true,
       relax_column_count: true,
       trim: true,
+      bom: true,
+      quote: '"',
+      escape: '"',
     }) as Array<Record<string, string>>;
+  };
 
-  const withSemicolon = parseWithDelimiter(';');
-  if (withSemicolon.length > 0) {
-    return withSemicolon;
+  try {
+    return parseWithDelimiter(preferredDelimiter);
+  } catch {
+    return parseWithDelimiter(fallbackDelimiter);
   }
-
-  return parseWithDelimiter(',');
 }
 
 function splitRatings(ratings: Rating[]) {

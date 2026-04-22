@@ -1,3 +1,4 @@
+import '@tensorflow/tfjs-node';
 import * as tf from '@tensorflow/tfjs';
 
 import type { Rating } from '../types';

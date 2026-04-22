@@ -1,3 +1,4 @@
+import '@tensorflow/tfjs-node';
 import { appConfig } from '../server/config';
 import { DataRepository } from '../server/services/data-repository';
 import { HybridRecommender } from '../server/services/hybrid-recommender';

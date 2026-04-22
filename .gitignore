@@ -148,3 +148,5 @@ data/processed/*.json
 data
 AGENTS.md
 SDD.md
+
+tasks

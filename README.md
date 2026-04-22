@@ -76,7 +76,13 @@ python scripts/download_kaggle_dataset.py
 Then preprocess into `data/processed`:
 
 ```bash
-npm run prepare:data -- --dataset=/absolute/path/to/downloaded/files
+npm run prepare:data
+```
+
+If you want to pass the dataset path explicitly, use the real path returned by KaggleHub (do not use a placeholder):
+
+```bash
+npm run prepare:data -- --dataset=/home/your-user/.cache/kagglehub/datasets/arashnic/book-recommendation-dataset/versions/3
 ```
 
 ## Evaluation
@@ -97,8 +103,17 @@ Outputs:
 Copy `.env.example` to `.env` and configure when needed.
 
 For Qdrant cloud:
-- `QDRANT_URL`
+- `QDRANT_URL` 
 - `QDRANT_API_KEY`
 - `QDRANT_COLLECTION`
 
 If not configured, the API runs with in-memory vectors automatically.
+
+from qdrant_client import QdrantClient
+
+qdrant_client = QdrantClient(
+    url="QDRANT_URL", 
+    api_key="QDRANT_API_KEY",
+)
+
+print(qdrant_client.get_collections())
