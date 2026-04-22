@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 38 33% 92%;
+  --foreground: 30 20% 14%;
+  --card: 36 35% 93%;
+  --card-foreground: 30 20% 14%;
+  --border: 30 20% 75%;
+  --input: 30 24% 74%;
+  --ring: 41 82% 56%;
+  --primary: 33 30% 18%;
+  --primary-foreground: 45 53% 94%;
+  --secondary: 35 20% 85%;
+  --secondary-foreground: 30 20% 16%;
+  --muted: 36 26% 88%;
+  --muted-foreground: 32 12% 36%;
+  --accent: 44 83% 58%;
+  --accent-foreground: 24 31% 12%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: linear-gradient(180deg, #f7f2e9 0%, #f0e7da 100%);
+  color: hsl(var(--foreground));
+  font-family: 'Manrope', sans-serif;
+}
+
+.book-grain {
+  opacity: 0.16;
+  background-image: radial-gradient(circle at 1px 1px, #5b4631 1px, transparent 0);
+  background-size: 16px 16px;
+}
