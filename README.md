@@ -1,6 +1,6 @@
 # Hybrid Book Recommendation System
 
-TypeScript implementation of the SDD MVP:
+Stack:
 - React + Vite + Tailwind + shadcn UI frontend
 - Node.js API in TypeScript
 - TensorFlow.js neural reranker
