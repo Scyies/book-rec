@@ -1,14 +1,9 @@
 import { startTransition, useDeferredValue, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenText, Plus, Search, X } from 'lucide-react';
+import { Plus, Search, X } from 'lucide-react';
 
 import { searchBooks } from '@/lib/api';
 import type { BookSummary } from '@/types';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface BookPickerProps {
   selectedBooks: BookSummary[];
@@ -43,143 +38,128 @@ export function BookPicker({ selectedBooks, onAddBook, onRemoveBook }: BookPicke
   }
 
   return (
-    <Card className="overflow-hidden border-[#1d2741]/60 bg-[#f2ede4]/90 shadow-[0_32px_90px_rgba(15,23,42,0.18)]">
-      <CardHeader className="border-b border-[#d6cfc2] pb-4">
-        <p className="text-xs uppercase tracking-[0.35em] text-[#6a6259]">Library Explorer</p>
-        <CardTitle className="font-heading text-5xl leading-none tracking-[0.04em] text-[#111827]">
-          Build A Taste Profile
-        </CardTitle>
-        <CardDescription className="max-w-2xl text-sm text-[#5d5447]">
-          Search is submit-driven. Typing stays local, the catalog request runs only when you commit it, and the shelf stays scroll-bounded.
-        </CardDescription>
-      </CardHeader>
+    <div className="space-y-8 animate-rise [animation-delay:150ms]">
+      <div className="flex flex-col gap-2">
+        <h2 className="font-heading text-4xl">Catalog</h2>
+        <p className="text-black/60 text-sm max-w-lg">
+          Search the index to build your reference shelf. Selections guide the neural pipeline.
+        </p>
+      </div>
 
-      <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1.15fr)_20rem]">
-        <section className="space-y-4">
-          <form className="flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
-            <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7a7268]" />
-              <Input
-                value={draftQuery}
-                onChange={(event) => setDraftQuery(event.target.value)}
-                placeholder="Search by title, author, or leave empty for the popular shelf"
-                className="h-12 rounded-full border-[#c8bead] bg-white pl-11 text-[#111827] placeholder:text-[#8a8176]"
-              />
-            </div>
-            <Button type="submit" className="h-12 rounded-full bg-[#11192b] px-6 text-stone-100 hover:bg-[#18233b]">
-              Search Catalog
-            </Button>
-          </form>
+      <form onSubmit={handleSubmit} className="relative group">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-black/40 group-focus-within:text-black transition-colors">
+          <Search className="w-5 h-5" />
+        </div>
+        <input
+          type="text"
+          value={draftQuery}
+          onChange={(event) => setDraftQuery(event.target.value)}
+          placeholder="Search author, title, or topic..."
+          className="w-full bg-transparent border border-black h-14 pl-12 pr-32 text-lg focus:outline-none focus:ring-1 focus:ring-black placeholder:text-black/30 rounded-none transition-shadow"
+        />
+        <button
+          type="submit"
+          className="absolute inset-y-1 right-1 bg-black text-white px-6 text-sm font-bold uppercase tracking-wider hover:bg-black/80 transition-colors"
+        >
+          Search
+        </button>
+      </form>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.25em] text-[#7a7268]">
-            <Badge variant="outline" className="rounded-full border-[#cabfae] bg-white/70 px-3 py-1 text-[#4c4438]">
-              Active query
-            </Badge>
-            <span className="truncate">{submittedQuery || 'Popular shelf'}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+        {/* Search Results */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-black pb-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-black/50">
+              {submittedQuery ? 'Search Results' : 'Popular'}
+            </span>
             {deferredDraftQuery !== submittedQuery && deferredDraftQuery.trim().length > 0 && (
-              <span className="rounded-full bg-[#ece5d8] px-3 py-1 tracking-[0.16em] text-[#7a7268]">
-                Staged: {deferredDraftQuery}
-              </span>
+              <span className="text-xs bg-black text-white px-2 py-0.5 font-medium">Unsaved</span>
             )}
           </div>
+          
+          <div className="h-[400px] overflow-y-auto pr-4 space-y-4 scrollbar-hide">
+            {searchQuery.data?.map((book) => {
+              const selected = selectedIds.has(book.bookId);
 
-          <div className="rounded-[1.75rem] border border-[#d6cfc2] bg-white/80">
-            <ScrollArea className="h-[28rem]">
-              <div className="grid gap-3 p-4 [content-visibility:auto]">
-                {searchQuery.data?.map((book) => {
-                  const selected = selectedIds.has(book.bookId);
-
-                  return (
-                    <article
-                      key={book.bookId}
-                      className="grid min-w-0 gap-3 rounded-[1.35rem] border border-[#e4dbcf] bg-[#faf7f1] p-4 sm:grid-cols-[minmax(0,1fr)_auto]"
-                    >
-                      <div className="min-w-0 space-y-2">
-                        <div className="flex min-w-0 items-start justify-between gap-3">
-                          <h3 className="line-clamp-2 text-base font-semibold leading-tight text-[#121826]">{book.title}</h3>
-                          {book.year && (
-                            <span className="shrink-0 rounded-full bg-[#ece5d8] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#62584b]">
-                              {book.year}
-                            </span>
-                          )}
-                        </div>
-                        <p className="truncate text-sm text-[#4f4a42]">{book.author}</p>
-                        <p className="truncate text-xs uppercase tracking-[0.18em] text-[#847a6d]">{book.publisher}</p>
-                      </div>
-
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={selected}
-                        onClick={() => startTransition(() => onAddBook(book))}
-                        className="h-10 self-start rounded-full bg-[#11192b] px-4 text-stone-100 hover:bg-[#18233b] disabled:bg-[#b8b0a4] disabled:text-white"
-                      >
-                        <Plus className="size-4" />
-                        {selected ? 'On shelf' : 'Add'}
-                      </Button>
-                    </article>
-                  );
-                })}
-
-                {!searchQuery.isLoading && !searchQuery.data?.length && (
-                  <div className="rounded-[1.5rem] border border-dashed border-[#d6cfc2] bg-[#f7f2ea] p-6 text-sm text-[#6b6257]">
-                    No books matched that search. Try a shorter query or clear it for the popular shelf.
-                  </div>
-                )}
-
-                {searchQuery.isLoading &&
-                  Array.from({ length: 6 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="h-28 animate-pulse rounded-[1.35rem] border border-[#e4dbcf] bg-gradient-to-r from-[#f6f0e6] via-[#ede5d7] to-[#f6f0e6]"
-                    />
-                  ))}
-              </div>
-            </ScrollArea>
-          </div>
-        </section>
-
-        <aside className="rounded-[1.75rem] border border-[#d6cfc2] bg-[#11192b] p-4 text-stone-100">
-          <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">Favorites Shelf</p>
-              <h3 className="font-heading text-3xl tracking-[0.05em] text-stone-50">Curated Inputs</h3>
-            </div>
-            <Badge className="rounded-full bg-amber-300 px-3 py-1 text-[#0f172a]">{selectedBooks.length}</Badge>
-          </div>
-
-          <ScrollArea className="mt-4 h-[28rem]">
-            <div className="space-y-3 pr-3">
-              {selectedBooks.map((book) => (
-                <article key={book.bookId} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-[1.25rem] border border-white/10 bg-white/5 p-3">
-                  <div className="min-w-0">
-                    <p className="line-clamp-2 text-sm font-semibold text-stone-50">{book.title}</p>
-                    <p className="truncate text-xs uppercase tracking-[0.18em] text-stone-400">{book.author}</p>
+              return (
+                <div key={book.bookId} className="group flex items-start justify-between gap-4 py-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-heading text-xl leading-tight truncate group-hover:underline underline-offset-4">
+                      {book.title}
+                    </h3>
+                    <p className="text-sm text-black/60 truncate mt-1">
+                      {book.author} <span className="mx-2 text-black/20">|</span> {book.publisher}
+                    </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => startTransition(() => onRemoveBook(book.bookId))}
-                    aria-label={`Remove ${book.title}`}
-                    className="rounded-full border border-white/10 p-2 text-stone-300 transition hover:border-amber-300 hover:text-amber-300"
+                    disabled={selected}
+                    onClick={() => startTransition(() => onAddBook(book))}
+                    className={`shrink-0 w-8 h-8 flex items-center justify-center border transition-all ${
+                      selected 
+                        ? 'border-black/20 text-black/20 bg-transparent' 
+                        : 'border-black text-black hover:bg-black hover:text-white'
+                    }`}
                   >
-                    <X className="size-4" />
+                    <Plus className="w-4 h-4" />
                   </button>
-                </article>
-              ))}
-
-              {!selectedBooks.length && (
-                <div className="flex h-48 flex-col items-center justify-center rounded-[1.5rem] border border-dashed border-white/10 bg-white/5 px-4 text-center">
-                  <BookOpenText className="mb-3 size-8 text-cyan-200/70" />
-                  <p className="text-sm font-medium text-stone-200">Nothing selected yet.</p>
-                  <p className="mt-2 text-xs uppercase tracking-[0.24em] text-stone-500">
-                    Add a few books to give the hybrid model signal.
-                  </p>
                 </div>
-              )}
-            </div>
-          </ScrollArea>
-        </aside>
-      </CardContent>
-    </Card>
+              );
+            })}
+
+            {!searchQuery.isLoading && !searchQuery.data?.length && (
+              <div className="py-12 text-center text-black/50 text-sm">
+                No matching volumes found.
+              </div>
+            )}
+
+            {searchQuery.isLoading && Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="py-2 animate-pulse flex justify-between gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="h-6 bg-black/5 w-3/4" />
+                  <div className="h-4 bg-black/5 w-1/2" />
+                </div>
+                <div className="w-8 h-8 bg-black/5" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Selected Shelf */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-black pb-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-black/50">Shelf</span>
+            <span className="text-xs font-mono font-bold bg-black text-white px-2 py-0.5">
+              {selectedBooks.length}
+            </span>
+          </div>
+
+          <div className="h-[400px] overflow-y-auto pr-4 space-y-3 scrollbar-hide">
+            {selectedBooks.map((book) => (
+              <div key={book.bookId} className="flex items-center gap-3 bg-black/5 p-3 group">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{book.title}</p>
+                  <p className="text-xs text-black/50 uppercase tracking-wider truncate mt-0.5">{book.author}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => startTransition(() => onRemoveBook(book.bookId))}
+                  className="shrink-0 p-1.5 text-black/40 hover:text-black hover:bg-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+
+            {!selectedBooks.length && (
+              <div className="py-12 border border-dashed border-black/20 text-center flex flex-col items-center gap-2">
+                <span className="text-sm text-black/50">Empty Shelf</span>
+                <span className="text-xs uppercase tracking-widest text-black/30">Select volumes to begin</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

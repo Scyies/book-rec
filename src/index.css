@@ -1,25 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: 38 33% 92%;
-  --foreground: 30 20% 14%;
-  --card: 36 35% 93%;
-  --card-foreground: 30 20% 14%;
-  --border: 30 20% 75%;
-  --input: 30 24% 74%;
-  --ring: 41 82% 56%;
-  --primary: 33 30% 18%;
-  --primary-foreground: 45 53% 94%;
-  --secondary: 35 20% 85%;
-  --secondary-foreground: 30 20% 16%;
-  --muted: 36 26% 88%;
-  --muted-foreground: 32 12% 36%;
-  --accent: 44 83% 58%;
-  --accent-foreground: 24 31% 12%;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3%;
+  --border: 0 0% 10%;
+  --input: 0 0% 90%;
+  --primary: 0 0% 5%;
+  --primary-foreground: 0 0% 98%;
 }
 
 * {
@@ -29,10 +20,10 @@
 body {
   margin: 0;
   min-width: 320px;
-  background:
-    linear-gradient(180deg, #f4eee4 0%, #efe7db 42%, #ebe4da 100%);
+  background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -45,14 +36,6 @@ textarea {
   isolation: isolate;
 }
 
-.catalog-grid {
-  background-image:
-    linear-gradient(rgba(17, 25, 43, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17, 25, 43, 0.04) 1px, transparent 1px);
-  background-size: 4rem 4rem;
-  mask-image: radial-gradient(circle at center, black 48%, transparent 100%);
-}
-
 .animate-rise {
   animation: rise-in 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -60,7 +43,7 @@ textarea {
 @keyframes rise-in {
   from {
     opacity: 0;
-    transform: translateY(22px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
