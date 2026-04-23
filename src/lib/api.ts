@@ -19,13 +19,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchHealth() {
-  return request<HealthResponse>('/health');
+export async function fetchHealth(signal?: AbortSignal) {
+  return request<HealthResponse>('/health', { signal });
 }
 
-export async function searchBooks(query: string) {
+export async function searchBooks(query: string, signal?: AbortSignal) {
   const q = new URLSearchParams({ q: query }).toString();
-  return request<{ books: BookSummary[] }>(`/books/search?${q}`);
+  return request<{ books: BookSummary[] }>(`/books/search?${q}`, { signal });
 }
 
 export async function recommendBooks(payload: {

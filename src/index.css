@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -29,13 +29,41 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: linear-gradient(180deg, #f7f2e9 0%, #f0e7da 100%);
+  background:
+    linear-gradient(180deg, #f4eee4 0%, #efe7db 42%, #ebe4da 100%);
   color: hsl(var(--foreground));
-  font-family: 'Manrope', sans-serif;
+  font-family: 'IBM Plex Sans', sans-serif;
 }
 
-.book-grain {
-  opacity: 0.16;
-  background-image: radial-gradient(circle at 1px 1px, #5b4631 1px, transparent 0);
-  background-size: 16px 16px;
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+#root {
+  isolation: isolate;
+}
+
+.catalog-grid {
+  background-image:
+    linear-gradient(rgba(17, 25, 43, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 25, 43, 0.04) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  mask-image: radial-gradient(circle at center, black 48%, transparent 100%);
+}
+
+.animate-rise {
+  animation: rise-in 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

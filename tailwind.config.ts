@@ -34,8 +34,8 @@ export default {
         },
       },
       fontFamily: {
-        heading: ['"Bebas Neue"', 'sans-serif'],
-        body: ['"Manrope"', 'sans-serif'],
+        heading: ['"Cormorant Garamond"', 'serif'],
+        body: ['"IBM Plex Sans"', 'sans-serif'],
       },
       boxShadow: {
         glow: '0 0 0 2px rgba(245, 198, 59, 0.22), 0 12px 30px rgba(10, 7, 5, 0.3)',
